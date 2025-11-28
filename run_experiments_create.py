@@ -19,7 +19,11 @@ def main():
     parser = argparse.ArgumentParser(
         description="Run identical workloads on BST and Treap and save the collected metrics."
     )
-    parser.add_argument("--dataset", type=str, help="Path to JSON lines dataset (id, created_utc, score).")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        help="Path to JSON lines dataset (plain text or .zst) with id, created_utc, score.",
+    )
     parser.add_argument("--sample-size", type=int, default=1000, help="Number of posts to use from dataset or generator.")
     parser.add_argument("--search-trials", type=int, default=200, help="Number of tree search operations per structure.")
     parser.add_argument("--delete-ratio", type=float, default=0.2, help="Fraction of posts deleted after insertions.")
@@ -34,7 +38,10 @@ def main():
     args = parser.parse_args()
 
     if args.dataset:
-        posts = load_posts(args.dataset, args.sample_size)
+        dataset_path = Path(args.dataset)
+        if not dataset_path.is_file():
+            parser.error(f"Dataset file '{dataset_path}' does not exist.")
+        posts = load_posts(str(dataset_path), args.sample_size)
     else:
         posts = generate_synthetic_posts(args.sample_size, args.seed)
 

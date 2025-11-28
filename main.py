@@ -1,6 +1,14 @@
+import contextlib
+import io
 import json
-import time
 import math
+import time
+from pathlib import Path
+
+try:
+    import zstandard as zstd
+except ImportError:  # pragma: no cover - optional dependency
+    zstd = None
 
 
 class Post:
@@ -400,12 +408,32 @@ class TreapFeed:
 # DATASET LOADER (SIMPLE)
 # =========================
 
+@contextlib.contextmanager
+def _open_posts_file(path):
+    """Open a JSONL file, transparently supporting .zst compression."""
+    file_path = Path(path)
+    if file_path.suffix == ".zst":
+        if zstd is None:
+            raise RuntimeError(
+                "Reading .zst datasets requires the optional 'zstandard' package. "
+                "Install it via `pip install zstandard` or provide an uncompressed dataset."
+            )
+        with file_path.open("rb") as raw:
+            dctx = zstd.ZstdDecompressor()
+            with dctx.stream_reader(raw) as reader:
+                with io.TextIOWrapper(reader, encoding="utf-8") as text_stream:
+                    yield text_stream
+    else:
+        with file_path.open("r", encoding="utf-8") as text_stream:
+            yield text_stream
+
+
 def iter_posts_from_file(path):
     """
     Simple JSON lines iterator.
     Each line must contain keys: id, created_utc, score.
     """
-    with open(path, "r", encoding="utf-8") as f:
+    with _open_posts_file(path) as f:
         for line in f:
             line = line.strip()
             if not line:

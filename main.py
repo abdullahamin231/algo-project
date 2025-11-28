@@ -187,9 +187,17 @@ class BSTFeed:
     def _compute_height(self, node):
         if node is None:
             return 0
-        left_h = self._compute_height(node.left)
-        right_h = self._compute_height(node.right)
-        return 1 + max(left_h, right_h)
+        max_depth = 0
+        stack = [(node, 1)]
+        while stack:
+            current, depth = stack.pop()
+            if depth > max_depth:
+                max_depth = depth
+            if current.left is not None:
+                stack.append((current.left, depth + 1))
+            if current.right is not None:
+                stack.append((current.right, depth + 1))
+        return max_depth
 
     def balancing_factor(self):
         if self.size == 0:
@@ -390,9 +398,17 @@ class TreapFeed:
     def _compute_height(self, node):
         if node is None:
             return 0
-        left_h = self._compute_height(node.left)
-        right_h = self._compute_height(node.right)
-        return 1 + max(left_h, right_h)
+        max_depth = 0
+        stack = [(node, 1)]
+        while stack:
+            current, depth = stack.pop()
+            if depth > max_depth:
+                max_depth = depth
+            if current.left is not None:
+                stack.append((current.left, depth + 1))
+            if current.right is not None:
+                stack.append((current.right, depth + 1))
+        return max_depth
 
     def balancing_factor(self):
         if self.size == 0:
